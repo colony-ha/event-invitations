@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>دعوة مناسبة سعيدة</title>
+<style>
+:root{--accent:#a77b4c;--paper:#fffdf9;--ink:#514239}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:28px 14px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at top,#fffefa,#f2e5d8);font-family:Tahoma,Arial,sans-serif;color:var(--ink);overflow-x:hidden}
+.card{position:relative;width:min(100%,570px);padding:38px 25px 30px;text-align:center;border:1px solid #d8bd9d;border-radius:28px;background:rgba(255,253,248,.96);box-shadow:0 18px 55px #76583b20;overflow:hidden}
+.card:before,.card:after{content:"✦";position:absolute;top:15px;color:#c49a67;font-size:30px}.card:before{right:20px}.card:after{left:20px}
+.kicker{color:var(--accent);font-size:14px;letter-spacing:1px;margin:15px 0 12px}
+h1{font-size:clamp(27px,7vw,40px);line-height:1.5;color:#75563d;margin:8px 0}
+.names{font-size:clamp(23px,6vw,33px);color:var(--accent);line-height:1.7;margin:10px 0}
+.ornament{color:#c8a77e;font-size:23px;margin:15px 0}.message{font-size:16px;line-height:2.1;max-width:450px;margin:15px auto 20px}
+.details{font-size:16px;line-height:2.5;margin:18px 0}.countdown{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:18px 0 22px}
+.unit{min-width:72px;padding:10px 8px;background:#f7eee4;border:1px solid #ead8c3;border-radius:14px}.number{display:block;font-size:24px;font-weight:bold;color:var(--accent)}.unit-label{font-size:12px;color:#897a6c}
+.button{display:block;width:100%;max-width:390px;margin:10px auto;padding:13px 16px;border-radius:28px;text-decoration:none;font:inherit;font-weight:bold;border:1px solid var(--accent);cursor:pointer}
+.primary{background:var(--accent);color:white}.secondary{background:transparent;color:#806347}.footer{font-size:12px;color:#9b8a79;margin-top:22px}
+.petal{position:fixed;top:-35px;z-index:5;pointer-events:none;opacity:.8;animation:fall linear forwards}
+@keyframes fall{0%{transform:translate3d(0,-5vh,0) rotate(0);opacity:0}12%{opacity:.8}100%{transform:translate3d(var(--drift),110vh,0) rotate(520deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){.petal{display:none}}
+</style>
+</head>
+<body>
+<main class="card">
+<div class="kicker">بِكُلِّ حُبٍّ وَفَرَح</div>
+<h1 id="eventTitle">دعوة لحضور مناسبة سعيدة</h1>
+<div class="names"><span id="name1">اسم صاحب المناسبة</span><span id="joiner"> ♥ </span><span id="name2"></span></div>
+<div class="ornament">✧ ❀ ✧</div>
+<p class="message" id="message">يسعدنا دعوتكم لمشاركتنا هذه اللحظات الجميلة. حضوركم يزيد فرحتنا!</p>
+<div class="details"><div id="dateLine">📅 التاريخ</div><div id="timeLine">🕒 الساعة</div><div id="venueLine">📍 مكان الحفل</div></div>
+<div class="ornament">──────── ✧ ────────</div>
+<div class="countdown" id="countdown"><div class="unit"><span class="number" id="days">—</span><span class="unit-label">يوم</span></div><div class="unit"><span class="number" id="hours">—</span><span class="unit-label">ساعة</span></div><div class="unit"><span class="number" id="minutes">—</span><span class="unit-label">دقيقة</span></div><div class="unit"><span class="number" id="seconds">—</span><span class="unit-label">ثانية</span></div></div>
+<a class="button primary" id="rsvp" href="#" target="_blank" rel="noopener">تأكيد الحضور عبر واتساب</a>
+<a class="button secondary" id="map" href="#" target="_blank" rel="noopener" hidden>افتح الموقع في الخريطة</a>
+<div class="footer">نتشرف بحضوركم ومشاركتكم فرحتنا ✨</div>
+</main>
+<script>
+const p=new URLSearchParams(location.search),$=id=>document.getElementById(id);
+const API_URL='__WORKER_URL__';
+const types={birthday:'🎂 دعوة عيد ميلاد',engagement:'💍 دعوة خطوبة',wedding:'💒 دعوة زفاف',baby:'👶 استقبال مولود جديد',aqiqah:'🌙 دعوة عقيقة',graduation:'🎓 دعوة حفل تخرج',henna:'🌿 دعوة حنة',party:'🎉 دعوة مناسبة سعيدة'};
+let countdownTimer;
+function render(data={}){
+ const get=(k,d='')=>data[k]||p.get(k)||d;
+ const type=get('eventType','party'),title=get('title',types[type]||types.party),n1=get('name1','أحبابنا'),n2=get('name2','');
+ const date=get('date',''),time=get('time',''),venue=get('venue',''),phone=get('phone',''),maps=get('maps',''),message=get('message','يسعدنا دعوتكم لمشاركتنا هذه اللحظات الجميلة. حضوركم يزيد فرحتنا!');
+ $('eventTitle').textContent=title;$('name1').textContent=n1;$('name2').textContent=n2;$('joiner').hidden=!n2;$('message').textContent=message;
+ $('dateLine').textContent='📅 '+(date?new Date(date+'T12:00:00').toLocaleDateString('ar-DZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'التاريخ يحدد لاحقاً');
+ $('timeLine').textContent='🕒 الساعة '+(time||'يحدد لاحقاً');$('venueLine').textContent='📍 '+(venue||'مكان الحفل');
+ document.title=title+' - '+n1;
+ const rsvp=$('rsvp');if(phone){rsvp.href='https://wa.me/'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent('السلام عليكم، نأكد حضوري: '+title);rsvp.hidden=false}else rsvp.hidden=true;
+ const map=$('map');if(maps&&/^https?:\/\//i.test(maps)){map.href=maps;map.hidden=false}else map.hidden=true;
+ clearInterval(countdownTimer);const target=date?new Date(date+'T'+(time||'00:00')+':00'):null;
+ if(!target||Number.isNaN(target.getTime())){$('countdown').hidden=true;return}
+ $('countdown').hidden=false;
+ function tick(){let diff=Math.max(0,target-Date.now());const vals=[Math.floor(diff/86400000),Math.floor(diff%86400000/3600000),Math.floor(diff%3600000/60000),Math.floor(diff%60000/1000)];['days','hours','minutes','seconds'].forEach((id,i)=>$(id).textContent=vals[i].toLocaleString('ar-DZ'))}
+ tick();countdownTimer=setInterval(tick,1000);
+}
+async function load(){
+ if(p.has('id')){
+  if(API_URL==='__WORKER_URL__'){render({});$('eventTitle').textContent='الدعوة قيد التجهيز';$('message').textContent='سيتم تفعيل عرض الدعوات بعد ربط خدمة التخزين.';return}
+  try{const r=await fetch(API_URL+'/api/invitations/'+encodeURIComponent(p.get('id')));const j=await r.json();if(!r.ok||!j.success||!j.invitation)throw new Error();render(j.invitation)}catch(_){render({});$('eventTitle').textContent='الرابط غير متاح';$('message').textContent='قد تكون صلاحية هذه الدعوة انتهت أو أن الرابط غير صحيح.'}
+ }else render({});
+}
+load();
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){function petal(){const e=document.createElement('span');e.className='petal';e.textContent=['✿','❀','🌸'][Math.floor(Math.random()*3)];e.style.left=Math.random()*100+'vw';e.style.fontSize=(12+Math.random()*13)+'px';e.style.setProperty('--drift',(Math.random()*140-70)+'px');e.style.animationDuration=(9+Math.random()*8)+'s';document.body.appendChild(e);setTimeout(()=>e.remove(),18000)}setInterval(petal,950)}
+</script>
+</body></html>
