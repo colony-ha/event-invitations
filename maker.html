@@ -45,7 +45,7 @@ label{display:block;font-size:13px;margin:0 0 7px}input,select,textarea{width:10
 const $=id=>document.getElementById(id);
 const keys=['eventType','title','name1','name2','date','time','venue','phone','maps','message'];
 // سنضع رابط Cloudflare Worker هنا بعد إنشائه.
-const API_URL='__WORKER_URL__';
+const API_URL='https://event-invitations-api.colonyus666.workers.dev';
 const labels={
  birthday:['اسم صاحب عيد الميلاد','اسم إضافي (اختياري)','دعوة لحضور عيد ميلاد'],
  engagement:['اسم صاحب/ة الخطوبة','اسم الخطيب/ة','دعوة لحضور حفل الخطوبة'],
@@ -66,7 +66,7 @@ $('form').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('submitBtn');btn.disabled=true;const old=btn.textContent;btn.textContent='⏳ جاري إنشاء الرابط...';
  const payload={};for(const k of keys){const v=$(k).value.trim();if(v)payload[k]=v}
  try{
-  if(API_URL==='__WORKER_URL__')throw new Error('Worker not connected yet');
+  if(API_URL==='https://event-invitations-api.colonyus666.workers.dev')throw new Error('Worker not connected yet');
   const r=await fetch(API_URL+'/api/invitations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const saved=await r.json();if(!r.ok||!saved.success||!saved.id)throw new Error(saved.error||'Save failed');
   const publicUrl=new URL('./',location.href);publicUrl.search='';publicUrl.searchParams.set('id',saved.id);let finalUrl=publicUrl.href;
