@@ -58,7 +58,6 @@ function render(data={}){
 }
 async function load(){
  if(p.has('id')){
-  if(API_URL==='https://event-invitations-api.colonyus666.workers.dev'){render({});$('eventTitle').textContent='الدعوة قيد التجهيز';$('message').textContent='سيتم تفعيل عرض الدعوات بعد ربط خدمة التخزين.';return}
   try{const r=await fetch(API_URL+'/api/invitations/'+encodeURIComponent(p.get('id')));const j=await r.json();if(!r.ok||!j.success||!j.invitation)throw new Error();render(j.invitation)}catch(_){render({});$('eventTitle').textContent='الرابط غير متاح';$('message').textContent='قد تكون صلاحية هذه الدعوة انتهت أو أن الرابط غير صحيح.'}
  }else render({});
 }
