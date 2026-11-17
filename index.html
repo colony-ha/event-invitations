@@ -37,7 +37,7 @@ h1{font-size:clamp(27px,7vw,40px);line-height:1.5;color:#75563d;margin:8px 0}
 </main>
 <script>
 const p=new URLSearchParams(location.search),$=id=>document.getElementById(id);
-const API_URL='__WORKER_URL__';
+const API_URL='https://event-invitations-api.colonyus666.workers.dev';
 const types={birthday:'🎂 دعوة عيد ميلاد',engagement:'💍 دعوة خطوبة',wedding:'💒 دعوة زفاف',baby:'👶 استقبال مولود جديد',aqiqah:'🌙 دعوة عقيقة',graduation:'🎓 دعوة حفل تخرج',henna:'🌿 دعوة حنة',party:'🎉 دعوة مناسبة سعيدة'};
 let countdownTimer;
 function render(data={}){
@@ -58,7 +58,7 @@ function render(data={}){
 }
 async function load(){
  if(p.has('id')){
-  if(API_URL==='__WORKER_URL__'){render({});$('eventTitle').textContent='الدعوة قيد التجهيز';$('message').textContent='سيتم تفعيل عرض الدعوات بعد ربط خدمة التخزين.';return}
+  if(API_URL==='https://event-invitations-api.colonyus666.workers.dev'){render({});$('eventTitle').textContent='الدعوة قيد التجهيز';$('message').textContent='سيتم تفعيل عرض الدعوات بعد ربط خدمة التخزين.';return}
   try{const r=await fetch(API_URL+'/api/invitations/'+encodeURIComponent(p.get('id')));const j=await r.json();if(!r.ok||!j.success||!j.invitation)throw new Error();render(j.invitation)}catch(_){render({});$('eventTitle').textContent='الرابط غير متاح';$('message').textContent='قد تكون صلاحية هذه الدعوة انتهت أو أن الرابط غير صحيح.'}
  }else render({});
 }
