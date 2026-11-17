@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>صانع دعوات المناسبات</title>
+<style>
+:root{--gold:#b88a55;--ink:#43352f;--muted:#8b7a70;--line:#eadbcb;--paper:#fffdf9}
+*{box-sizing:border-box}body{margin:0;padding:20px;background:radial-gradient(circle at top,#fffdf9,#f2e7dc);font-family:Tahoma,Arial,sans-serif;color:var(--ink)}
+header{text-align:center;margin:8px auto 22px}h1{font-size:clamp(23px,4vw,32px);color:#987047;margin:8px}header p{color:var(--muted);line-height:1.8;margin:0}
+.layout{max-width:1280px;margin:auto;display:grid;grid-template-columns:minmax(300px,430px) minmax(0,1fr);gap:18px;align-items:start}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 12px 34px #75543a12;min-width:0}
+h2{font-size:18px;color:#8e6844;margin:0 0 16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wide{grid-column:1/-1}
+label{display:block;font-size:13px;margin:0 0 7px}input,select,textarea{width:100%;font:inherit;border:1px solid #ddcbbb;border-radius:10px;padding:12px;background:white;color:var(--ink);min-width:0}textarea{min-height:80px;resize:vertical}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}button{font:inherit;border:0;border-radius:28px;padding:12px 16px;cursor:pointer}.primary{background:#a77b4c;color:white;flex:1}.secondary{background:#f4e9dd;color:#75583e}.preview{position:sticky;top:12px}.frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:white}.frame iframe{display:block;width:100%;height:760px;border:0}.result{margin-top:14px;padding:14px;background:#f7eee5;border-radius:12px}.result[hidden]{display:none}.url{direction:ltr;text-align:left}.hint{font-size:12px;color:var(--muted);line-height:1.8}.footer{text-align:center;font-size:12px;color:#9a887b;margin:20px}
+@media(max-width:850px){body{padding:10px}.layout{grid-template-columns:1fr}.preview{position:static;grid-row:2}.frame iframe{height:720px}.panel{padding:15px}}
+@media(max-width:440px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><h1>🎉 صانع دعوات المناسبات</h1><p>اختار نوع المناسبة، عمّر المعلومات وشوف الدعوة قبل ما تنشئ رابط الزبون.</p></header>
+<div class="layout">
+<section class="panel">
+<h2>📝 معلومات المناسبة</h2>
+<form id="form">
+<div class="grid">
+<div class="wide"><label for="eventType">نوع المناسبة</label><select id="eventType"><option value="birthday">🎂 عيد ميلاد</option><option value="engagement">💍 خطوبة</option><option value="wedding">💒 زفاف</option><option value="baby">👶 استقبال مولود</option><option value="aqiqah">🌙 عقيقة</option><option value="graduation">🎓 تخرج</option><option value="henna">🌿 حنة</option><option value="party">🎉 حفلة ومناسبة أخرى</option></select></div>
+<div class="wide"><label for="title">عنوان الدعوة</label><input id="title" placeholder="مثلاً: دعوة لحضور عيد ميلادي" required></div>
+<div><label for="name1" id="name1Label">اسم صاحب المناسبة</label><input id="name1" placeholder="الاسم" required></div>
+<div><label for="name2" id="name2Label">اسم إضافي (اختياري)</label><input id="name2" placeholder="اسم آخر"></div>
+<div><label for="date">التاريخ</label><input id="date" type="date" required></div>
+<div><label for="time">الساعة</label><input id="time" type="time" value="18:00" required></div>
+<div class="wide"><label for="venue">مكان الحفل</label><input id="venue" placeholder="قاعة / منزل — المدينة" required></div>
+<div class="wide"><label for="phone">رقم واتساب مع رمز البلد</label><input id="phone" type="tel" placeholder="+213..." required></div>
+<div class="wide"><label for="maps">رابط Google Maps (اختياري)</label><input id="maps" type="url" placeholder="https://maps.app.goo.gl/..."></div>
+<div class="wide"><label for="message">رسالة الدعوة</label><textarea id="message" placeholder="يسعدنا حضوركم ومشاركتنا فرحتنا..."></textarea></div>
+</div>
+<div class="actions"><button class="primary" id="submitBtn" type="submit">🔗 إنشاء رابط الدعوة</button><button class="secondary" type="reset">مسح المعلومات</button></div>
+</form>
+<section class="result" id="result" hidden><label for="link">رابط الدعوة الجاهز</label><input id="link" class="url" readonly><div class="actions"><button class="primary" id="copy" type="button">نسخ الرابط</button><button class="secondary" id="open" type="button">فتح الدعوة</button></div><p class="hint">بعد ربط Worker، يتم حفظ الدعوة وإنشاء رابط مختصر صالح لمدة 30 يوماً.</p></section>
+</section>
+<section class="panel preview"><h2>👀 معاينة الدعوة</h2><div class="frame"><iframe id="preview" title="معاينة الدعوة"></iframe></div></section>
+</div>
+<div class="footer">Event Invitations · دعوات لكل لحظات الفرح</div>
+<script>
+const $=id=>document.getElementById(id);
+const keys=['eventType','title','name1','name2','date','time','venue','phone','maps','message'];
+// سنضع رابط Cloudflare Worker هنا بعد إنشائه.
+const API_URL='__WORKER_URL__';
+const labels={
+ birthday:['اسم صاحب عيد الميلاد','اسم إضافي (اختياري)','دعوة لحضور عيد ميلاد'],
+ engagement:['اسم صاحب/ة الخطوبة','اسم الخطيب/ة','دعوة لحضور حفل الخطوبة'],
+ wedding:['اسم العريس','اسم العروس','دعوة لحضور حفل الزفاف'],
+ baby:['اسم المولود','اسم الوالدين (اختياري)','دعوة لاستقبال مولود جديد'],
+ aqiqah:['اسم الطفل','اسم الوالدين (اختياري)','دعوة لحضور العقيقة'],
+ graduation:['اسم المتخرج/ة','اسم إضافي (اختياري)','دعوة لحفل التخرج'],
+ henna:['اسم العروس','اسم إضافي (اختياري)','دعوة لحفل الحنة'],
+ party:['اسم صاحب المناسبة','اسم إضافي (اختياري)','دعوة لحضور مناسبة سعيدة']
+};
+function applyType(){const v=$('eventType').value;const a=labels[v];$('name1Label').textContent=a[0];$('name2Label').textContent=a[1];if(!$('title').dataset.edited)$('title').value=a[2];}
+$('title').addEventListener('input',()=>$('title').dataset.edited='1');
+function previewUrl(){const u=new URL('index.html',location.href);u.search='';for(const k of keys){const v=$(k).value.trim();if(v)u.searchParams.set(k,v)}return u.href}
+function updatePreview(){$('preview').src=previewUrl()}
+let timer;$('form').querySelectorAll('input,select,textarea').forEach(el=>el.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(updatePreview,160)}));
+$('eventType').addEventListener('change',()=>{delete $('title').dataset.edited;applyType();updatePreview()});
+$('form').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=$('submitBtn');btn.disabled=true;const old=btn.textContent;btn.textContent='⏳ جاري إنشاء الرابط...';
+ const payload={};for(const k of keys){const v=$(k).value.trim();if(v)payload[k]=v}
+ try{
+  if(API_URL==='__WORKER_URL__')throw new Error('Worker not connected yet');
+  const r=await fetch(API_URL+'/api/invitations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const saved=await r.json();if(!r.ok||!saved.success||!saved.id)throw new Error(saved.error||'Save failed');
+  const publicUrl=new URL('./',location.href);publicUrl.search='';publicUrl.searchParams.set('id',saved.id);let finalUrl=publicUrl.href;
+  try{const sr=await fetch(API_URL+'/api/shorten',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:publicUrl.href})});const short=await sr.json();if(sr.ok&&short.success&&short.shortUrl)finalUrl=short.shortUrl}catch(_){}
+  $('link').value=finalUrl;$('result').hidden=false;
+ }catch(err){console.error(err);alert('ربط Cloudflare Worker مازال ما كملش. نكملوه بعد ما تعطيني رابط Worker.')}
+ finally{btn.disabled=false;btn.textContent=old}
+});
+$('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('link').value);$('copy').textContent='تم النسخ ✓'}catch(_){$('link').select();document.execCommand('copy')}});
+$('open').addEventListener('click',()=>{if($('link').value)window.open($('link').value,'_blank','noopener')});
+$('form').addEventListener('reset',()=>setTimeout(()=>{$('result').hidden=true;delete $('title').dataset.edited;applyType();updatePreview()},0));
+applyType();updatePreview();
+</script>
+</body></html>
