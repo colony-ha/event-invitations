@@ -72,7 +72,7 @@ $('form').addEventListener('submit',async e=>{
   const publicUrl=new URL('./',location.href);publicUrl.search='';publicUrl.searchParams.set('id',saved.id);let finalUrl=publicUrl.href;
   try{const sr=await fetch(API_URL+'/api/shorten',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:publicUrl.href})});const short=await sr.json();if(sr.ok&&short.success&&short.shortUrl)finalUrl=short.shortUrl}catch(_){}
   $('link').value=finalUrl;$('result').hidden=false;
- }catch(err){console.error(err);alert('ربط Cloudflare Worker مازال ما كملش. نكملوه بعد ما تعطيني رابط Worker.')}
+ }catch(err){console.error(err);alert('فشل إنشاء الدعوة: '+(err.message||'خطأ غير معروف')+'\n\nافتح Console إذا احتجنا تفاصيل إضافية.');}
  finally{btn.disabled=false;btn.textContent=old}
 });
 $('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('link').value);$('copy').textContent='تم النسخ ✓'}catch(_){$('link').select();document.execCommand('copy')}});
