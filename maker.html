@@ -66,7 +66,6 @@ $('form').addEventListener('submit',async e=>{
  e.preventDefault();const btn=$('submitBtn');btn.disabled=true;const old=btn.textContent;btn.textContent='⏳ جاري إنشاء الرابط...';
  const payload={};for(const k of keys){const v=$(k).value.trim();if(v)payload[k]=v}
  try{
-  if(API_URL==='https://event-invitations-api.colonyus666.workers.dev')throw new Error('Worker not connected yet');
   const r=await fetch(API_URL+'/api/invitations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const saved=await r.json();if(!r.ok||!saved.success||!saved.id)throw new Error(saved.error||'Save failed');
   const publicUrl=new URL('./',location.href);publicUrl.search='';publicUrl.searchParams.set('id',saved.id);let finalUrl=publicUrl.href;
