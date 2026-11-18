@@ -11,7 +11,7 @@ header{text-align:center;margin:8px auto 22px}h1{font-size:clamp(23px,4vw,32px);
 .panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 12px 34px #75543a12;min-width:0}
 h2{font-size:18px;color:#8e6844;margin:0 0 16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wide{grid-column:1/-1}
 label{display:block;font-size:13px;margin:0 0 7px}input,select,textarea{width:100%;font:inherit;border:1px solid #ddcbbb;border-radius:10px;padding:12px;background:white;color:var(--ink);min-width:0}textarea{min-height:80px;resize:vertical}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}button{font:inherit;border:0;border-radius:28px;padding:12px 16px;cursor:pointer}.primary{background:#a77b4c;color:white;flex:1}.secondary{background:#f4e9dd;color:#75583e}.preview{position:sticky;top:12px}.frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:white}.frame iframe{display:block;width:100%;height:760px;border:0}.result{margin-top:14px;padding:14px;background:#f7eee5;border-radius:12px}.result[hidden]{display:none}.url{direction:ltr;text-align:left}.hint{font-size:12px;color:var(--muted);line-height:1.8}.footer{text-align:center;font-size:12px;color:#9a887b;margin:20px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}button{font:inherit;border:0;border-radius:28px;padding:12px 16px;cursor:pointer}.primary{background:#a77b4c;color:white;flex:1}.secondary{background:#f4e9dd;color:#75583e}.preview{position:sticky;top:12px}.frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:white}.frame iframe{display:block;width:100%;height:760px;border:0}.result{margin-top:14px;padding:14px;background:#f7eee5;border-radius:12px}.result[hidden]{display:none}.url{direction:ltr;text-align:left}.hint{font-size:12px;color:var(--muted);line-height:1.8}.admin{margin-top:14px;padding:14px;border:1px dashed #d8bd9d;border-radius:12px;background:#fffaf4}.admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.admin-actions button{flex:1}.danger{background:#f8e5e2;color:#9b3d32}.status{font-size:13px;line-height:1.8;margin-top:8px;color:#75583e}.footer{text-align:center;font-size:12px;color:#9a887b;margin:20px}
 @media(max-width:850px){body{padding:10px}.layout{grid-template-columns:1fr}.preview{position:static;grid-row:2}.frame iframe{height:720px}.panel{padding:15px}}
 @media(max-width:440px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}}
 </style>
@@ -36,7 +36,7 @@ label{display:block;font-size:13px;margin:0 0 7px}input,select,textarea{width:10
 </div>
 <div class="actions"><button class="primary" id="submitBtn" type="submit">🔗 إنشاء رابط الدعوة</button><button class="secondary" type="reset">مسح المعلومات</button></div>
 </form>
-<section class="result" id="result" hidden><label for="link">رابط الدعوة الجاهز</label><input id="link" class="url" readonly><div class="actions"><button class="primary" id="copy" type="button">نسخ الرابط</button><button class="secondary" id="open" type="button">فتح الدعوة</button></div><p class="hint">بعد ربط Worker، يتم حفظ الدعوة وإنشاء رابط مختصر صالح لمدة 30 يوماً.</p></section>
+<section class="result" id="result" hidden><label for="link">رابط الدعوة الجاهز</label><input id="link" class="url" readonly><div class="actions"><button class="primary" id="copy" type="button">نسخ الرابط</button><button class="secondary" id="open" type="button">فتح الدعوة</button></div><p class="hint">الرابط يبدأ كمعاينة صالحة 24 ساعة. بعد الدفع فعّله من لوحة الإدارة ليبقى 30 يوماً.</p><div class="admin"><strong>🔐 إدارة الدعوة (للاستعمال الداخلي فقط)</strong><p class="hint">أدخل رمز الإدارة الذي أضفته في Cloudflare Secret باسم EVENT_ADMIN_TOKEN. لا ترسله للزبون.</p><label for="adminToken">رمز الإدارة</label><input id="adminToken" type="password" autocomplete="off" placeholder="EVENT_ADMIN_TOKEN"><p class="hint">رقم الدعوة: <b id="invitationId">—</b></p><div class="admin-actions"><button class="primary" id="activate" type="button">تفعيل بعد الدفع · 30 يوم</button><button class="danger" id="cancel" type="button">إلغاء الرابط</button></div><div class="status" id="adminStatus" aria-live="polite"></div></div></section>
 </section>
 <section class="panel preview"><h2>👀 معاينة الدعوة</h2><div class="frame"><iframe id="preview" title="معاينة الدعوة"></iframe></div></section>
 </div>
@@ -44,6 +44,7 @@ label{display:block;font-size:13px;margin:0 0 7px}input,select,textarea{width:10
 <script>
 const $=id=>document.getElementById(id);
 const keys=['eventType','title','name1','name2','date','time','venue','phone','maps','message'];
+let currentInvitationId='';
 // سنضع رابط Cloudflare Worker هنا بعد إنشائه.
 const API_URL='https://event-invitations-api.colonyus666.workers.dev';
 const labels={
@@ -70,13 +71,16 @@ $('form').addEventListener('submit',async e=>{
   const saved=await r.json();if(!r.ok||!saved.success||!saved.id)throw new Error(saved.error||'Save failed');
   const publicUrl=new URL('./',location.href);publicUrl.search='';publicUrl.searchParams.set('id',saved.id);let finalUrl=publicUrl.href;
   try{const sr=await fetch(API_URL+'/api/shorten',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:publicUrl.href})});const short=await sr.json();if(sr.ok&&short.success&&short.shortUrl)finalUrl=short.shortUrl}catch(_){}
-  $('link').value=finalUrl;$('result').hidden=false;
+  $('link').value=finalUrl;currentInvitationId=saved.id;$('invitationId').textContent=saved.id;$('adminStatus').textContent='تم إنشاء معاينة صالحة 24 ساعة. بعد الدفع اضغط تفعيل.';$('result').hidden=false;
  }catch(err){console.error(err);alert('فشل إنشاء الدعوة: '+(err.message||'خطأ غير معروف')+'\n\nافتح Console إذا احتجنا تفاصيل إضافية.');}
  finally{btn.disabled=false;btn.textContent=old}
 });
 $('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('link').value);$('copy').textContent='تم النسخ ✓'}catch(_){$('link').select();document.execCommand('copy')}});
 $('open').addEventListener('click',()=>{if($('link').value)window.open($('link').value,'_blank','noopener')});
-$('form').addEventListener('reset',()=>setTimeout(()=>{$('result').hidden=true;delete $('title').dataset.edited;applyType();updatePreview()},0));
+async function adminAction(action){if(!currentInvitationId){alert('أنشئ الدعوة أولاً.');return}const token=$('adminToken').value.trim();if(!token){alert('أدخل رمز الإدارة أولاً.');return}const btn=$(action);btn.disabled=true;$('adminStatus').textContent='⏳ جاري تنفيذ العملية...';try{const r=await fetch(API_URL+'/api/admin/'+action,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({id:currentInvitationId})});const j=await r.json();if(!r.ok||!j.success)throw new Error(j.error||'فشلت العملية');$('adminStatus').textContent=action==='activate'?'✅ تم تفعيل الدعوة لمدة 30 يوماً.':'✅ تم إلغاء رابط الدعوة.'}catch(err){$('adminStatus').textContent='❌ '+err.message}finally{btn.disabled=false}}
+$('activate').addEventListener('click',()=>adminAction('activate'));
+$('cancel').addEventListener('click',()=>{if(confirm('هل أنت متأكد من إلغاء هذا الرابط؟'))adminAction('cancel')});
+$('form').addEventListener('reset',()=>setTimeout(()=>{$('result').hidden=true;currentInvitationId='';$('invitationId').textContent='—';$('adminStatus').textContent='';delete $('title').dataset.edited;applyType();updatePreview()},0));
 applyType();updatePreview();
 </script>
 </body></html>
